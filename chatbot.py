@@ -3,33 +3,9 @@ import sqlite3
 import requests
 import database as db
 
-# Cache du modèle disponible (pour ne pas interroger à chaque fois)
-_available_model = None
-
-def get_available_model(api_key):
-    """Interroge l'API pour obtenir le premier modèle supportant generateContent."""
-    global _available_model
-    if _available_model:
-        return _available_model
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-    try:
-        r = requests.get(url, timeout=5)
-        if r.status_code != 200:
-            return None
-        data = r.json()
-        for model in data.get("models", []):
-            if "generateContent" in model.get("supportedGenerationMethods", []):
-                model_name = model["name"].split("/")[-1]  # extraire "gemini-1.5-flash"
-                _available_model = model_name
-                return model_name
-        return None
-    except Exception:
-        return None
-
 def reponse_locale(question):
-    """Fallback utilisant des mots-clés (quand l'API n'est pas disponible)."""
     q = question.lower()
-    conn = sqlite3.connect(db.DB_PATH)
+    conn = sqlite3.connect(db.DB_NAME)
     cur = conn.cursor()
     # ID
     m = re.search(r'id\s*(\d+)', q)
@@ -58,41 +34,17 @@ def reponse_locale(question):
     conn.close()
     return "Je ne comprends pas. Essayez : 'livres disponibles', 'livre id 3', 'livres de Victor Hugo'."
 
-def chat(question, api_key=""):
+def ask_chatbot(question, api_key):
     if not api_key:
-        return "⚠️ [Mode LOCAL – Aucune clé API fournie]\n" + reponse_locale(question)
+        return "[Mode local] " + reponse_locale(question)
 
-    # Détection du modèle disponible
-    model_name = get_available_model(api_key)
-    if not model_name:
-        return "⚠️ [Mode LOCAL – Impossible de contacter l'API Gemini (aucun modèle trouvé)]\n" + reponse_locale(question)
-
-    # Construction de l'URL avec le modèle dynamique
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-    prompt = f"""Tu es un assistant de bibliothèque expert. Réponds en français, de manière précise et amicale.
-Voici la question posée par l'utilisateur : {question}
-Si la question concerne les livres présents dans la base de données, utilise les informations suivantes (issues de SQLite) :
-{get_contexte_bibliotheque()}
-Réponds de façon naturelle, sans inventer de données."""
-    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    prompt = f"Réponds en français à cette question sur une bibliothèque : {question}. Sois concis."
     try:
-        r = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=10)
+        r = requests.post(url, json={"contents": [{"parts": [{"text": prompt}]}]}, timeout=8)
         if r.status_code == 200:
-            data = r.json()
-            reponse_ia = data["candidates"][0]["content"]["parts"][0]["text"]
-            return f"🧠 [Gemini – {model_name}] {reponse_ia}"
+            return r.json()["candidates"][0]["content"]["parts"][0]["text"]
         else:
-            # Erreur HTTP (clé invalide, quota, etc.)
-            return f"⚠️ [Mode LOCAL – API erreur {r.status_code}] {reponse_locale(question)}"
-    except Exception as e:
-        return f"⚠️ [Mode LOCAL – Connexion échouée] {reponse_locale(question)}"
-
-def get_contexte_bibliotheque():
-    """Récupère un résumé des livres pour guider l'IA."""
-    conn = sqlite3.connect(db.DB_PATH)
-    cur = conn.cursor()
-    livres = cur.execute("SELECT titre, auteur, statut FROM livres LIMIT 5").fetchall()
-    conn.close()
-    if livres:
-        return "Exemples de livres : " + ", ".join(f"'{l[0]}' de {l[1]} ({l[2]})" for l in livres)
-    return "Aucun livre en base."
+            return "[Mode local (API erreur)] " + reponse_locale(question)
+    except:
+        return "[Mode local (connexion)] " + reponse_locale(question)
