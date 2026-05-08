@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 BiblioPro – Bibliothèque Intelligente</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <h2><i class="fas fa-book-open"></i> BiblioPro</h2>
+        <nav>
+            <button class="nav-btn active" data-tab="livres"><i class="fas fa-list"></i> Livres</button>
+            <button class="nav-btn" data-tab="chat"><i class="fas fa-robot"></i> Chatbot IA</button>
+            <button class="nav-btn" data-tab="config"><i class="fas fa-cog"></i> Configuration</button>
+        </nav>
+    </aside>
+    <main class="content">
+        <!-- Onglet Livres -->
+        <div id="livres-tab" class="tab active">
+            <div class="toolbar">
+                <input type="text" id="searchInput" placeholder="🔍 Rechercher (titre, auteur, ID)">
+                <button id="searchBtn"><i class="fas fa-search"></i></button>
+                <button id="resetBtn"><i class="fas fa-sync-alt"></i> Réinitialiser</button>
+            </div>
+            <div class="table-container">
+                <table id="livres-table">
+                    <thead>
+                        <tr><th>ID</th><th>Titre</th><th>Auteur</th><th>Catégorie</th><th>Année</th><th>Qté</th><th>Statut</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+            <div class="form-panel">
+                <h3><i class="fas fa-edit"></i> Ajouter / Modifier un livre</h3>
+                <div class="form-grid">
+                    <input type="text" id="titre" placeholder="Titre *">
+                    <input type="text" id="auteur" placeholder="Auteur *">
+                    <input type="text" id="categorie" placeholder="Catégorie">
+                    <input type="number" id="annee" placeholder="Année">
+                    <input type="number" id="quantite" placeholder="Quantité" value="1">
+                    <select id="statut">
+                        <option value="disponible">📗 Disponible</option>
+                        <option value="emprunté">📕 Emprunté</option>
+                        <option value="réservé">📙 Réservé</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button id="addBtn" class="primary"><i class="fas fa-plus"></i> Ajouter</button>
+                    <button id="updateBtn" class="warning"><i class="fas fa-pen"></i> Modifier</button>
+                    <button id="deleteBtn" class="danger"><i class="fas fa-trash"></i> Supprimer</button>
+                    <button id="clearBtn" class="secondary"><i class="fas fa-eraser"></i> Vider</button>
+                </div>
+                <p id="formMsg"></p>
+            </div>
+        </div>
+
+        <!-- Onglet Chatbot -->
+        <div id="chat-tab" class="tab">
+            <h3><i class="fas fa-comment-dots"></i> Discutez avec BiblioBot</h3>
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="question" placeholder="Posez votre question... (ex: livres disponibles, livre id 1, livres de Victor Hugo)">
+                    <button id="sendBtn"><i class="fas fa-paper-plane"></i> Envoyer</button>
+                </div>
+                <div class="examples">
+                    <span>Exemples :</span>
+                    <button class="example-btn">Livres disponibles</button>
+                    <button class="example-btn">Livre ID 1</button>
+                    <button class="example-btn">Livres de Victor Hugo</button>
+                    <button class="example-btn">Emprunter le livre ID 3</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Configuration -->
+        <div id="config-tab" class="tab">
+            <h3><i class="fas fa-key"></i> Clé API Google Gemini</h3>
+            <p>Obtenez une clé gratuite sur <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>.</p>
+            <div class="config-card">
+                <label for="apiKey">Clé API :</label>
+                <input type="password" id="apiKey" placeholder="AIza...">
+                <button id="saveKeyBtn"><i class="fas fa-save"></i> Sauvegarder</button>
+                <p id="apiStatus" class="status"></p>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
